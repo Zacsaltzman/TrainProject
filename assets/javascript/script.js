@@ -28,31 +28,44 @@
   			frequency: frequency
   		});
 
+      $("#trainName").val("");
+      $("#trainDestination").val("");
+      $("#firstTrainTime").val("");
+      $("#frequency").val("");
+
   		return false;
   	});
 
   database.ref().orderByChild("dateAdded").on("child_added", function (childSnapshot) {
 
-  	var updateButton = $("<button>").text("UPDATE").addClass("updateButton").attr("data-index", index);
-  	var removeButton = $("<button>").text("REMOVE").addClass("removeButton").attr("data-index", index).attr("data-key", childSnapshot.key);
+  	var updateButton = $("<button>").html("<span class='glyphicon glyphicon-edit'></span>").addClass("updateButton").attr("data-index", index).attr("data-key", childSnapshot.key);
+  	var removeButton = $("<button>").html("<span class='glyphicon glyphicon-remove'></span>").addClass("removeButton").attr("data-index", index).attr("data-key", childSnapshot.key);
 
     var firstTime = childSnapshot.val().firstTime;
-    var timeFormat = "HH:mm";
-    var convertedTime = moment(firstTime, timeFormat);
-    var diffTime = moment().diff(moment().unix(convertedTime), "minutes");
-    var timeRemainder = diffTime%childSnapshot.val().frequency;
-    var minutes = childSnapshot.val().frequency - timeRemainder;
-    var nextArrival = moment().add(minutes, "m").format("hh:mm A");
+    var tFrequency = parseInt(childSnapshot.val().frequency);
+    var firstTrain = moment(firstTime, "HH:mm").subtract(1, "years");
+    console.log(firstTrain);
+    console.log(firstTime);
+    var currentTime = moment();
+    var currentTimeCalc = moment().subtract(1, "years");
+    var diffTime = moment().diff(moment(firstTrain), "minutes");
+    var tRemainder = diffTime%tFrequency;
+    var minutesRemaining = tFrequency - tRemainder;
+    var nextTRain = moment().add(minutesRemaining, "minutes").format ("hh:mm A");
+    var beforeCalc = moment(firstTrain).diff(currentTimeCalc, "minutes");
+    var beforeMinutes = Math.ceil(moment.duration(beforeCalc).asMinutes());
 
-    if ((moment() - moment(convertedTime)) < 0) {
-      nextArrival = childSnapshot.val().firstTime;
-    }
-    else if ((moment() - moment(convertedTime)) < childSnapshot.val().firstTime) {
-      nextArrival = childSnapshot.val().firstTime;
+    if ((currentTimeCalc - firstTrain) < 0) {
+      nextTrain = childSnapshot.val().firstTime;
+      console.log("Before First Train");
+      minutesRemaining = beforeMinutes;
     }
     else {
-      nextArrival = moment().add(minutes, "m").format("hh:mm A");
+      nextTrain = moment().add(minutesRemaining, "minutes").format("hh:mm A");
+      minutesRemaining = tFrequency - tRemainder;
+      console.log("Working");
     }
+
 
   	var newRow = $("<tr>");
     newRow.addClass("row-" + index);
@@ -60,8 +73,8 @@
   	var cell2 = $("<td>").text(childSnapshot.val().name);
   	var cell3 = $("<td>").text(childSnapshot.val().destination);
   	var cell4 = $("<td>").text(childSnapshot.val().frequency);
-  	var cell5 = $("<td>").text(nextArrival);
-  	var cell6 = $("<td>").text(minutes);
+  	var cell5 = $("<td>").text(nextTrain);
+  	var cell6 = $("<td>").text(minutesRemaining);
   	var cell7 = $("<td>").append(removeButton);
 
   	newRow
@@ -88,4 +101,28 @@
     database.ref().child($(this).attr("data-key")).remove();
   };
 
+  function editRow () {
+    $(".row-" + $(this).attr("data-index")).children().eq(1).html("<textarea class='newName'></textarea>");
+    $(".row-" + $(this).attr("data-index")).children().eq(2).html("<textarea class='newDestination'></textarea>");
+    $(".row-" + $(this).attr("data-index")).children().eq(3).html("<textarea class='newFrequency' type='number'></textarea>");
+    $(this).toggleClass("updateButton").toggleClass("submitButton");
+  };
+
+  function submitRow () {
+    var newName = $(".newName").val().trim();
+    var newDestination = $(".newDestination").val().trim();
+    var newFrequency = $(".newFrequency").val().trim();
+
+    database.ref().child($(this).attr("data-key")).child("name").set(newName);
+    database.ref().child($(this).attr("data-key")).child("destination").set(newDestination);
+    database.ref().child($(this).attr("data-key")).child("frequency").set(newFrequency);
+
+    $(".row-" + $(this).attr("data-index")).children().eq(1).html(newName);
+    $(".row-" + $(this).attr("data-index")).children().eq(2).html(newDestination);
+    $(".row-" + $(this).attr("data-index")).children().eq(3).html(newFrequency);
+    $(this).toggleClass("updateButton").toggleClass("submitButton");
+  };
+
   $(document).on("click", ".removeButton", removeRow);
+  $(document).on("click", ".updateButton", editRow);
+  $(document).on("click", ".submitButton", submitRow);

@@ -1,0 +1,19 @@
+.jumbotron {
+	background-image: url("http://xboxhut.com/wp-content/uploads/2016/06/black-and-white-brick-wall-background-breakfast-nook-gym.jpg");
+	color: white;
+}
+
+body {
+	background-image: url("https://st2.depositphotos.com/2222964/5193/v/950/depositphotos_51933581-stock-illustration-city-buildings-background.jpg");
+}
+
+.panel-heading {
+	background-color: blue;
+}
+
+.panel > .panel-heading {
+    background-image: none;
+    background-color: #ddd;
+    color: grey;
+
+}
